@@ -13,8 +13,12 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
 
+# Always allow Vercel and localhost
+ALLOWED_HOSTS += ['.vercel.app', '.now.sh', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = list(set(ALLOWED_HOSTS))
+
 if not DEBUG:
-    ALLOWED_HOSTS += ['.vercel.app']
+    ALLOWED_HOSTS.append('*')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -106,6 +110,7 @@ LOGOUT_REDIRECT_URL = 'login'
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
 CSRF_TRUSTED_ORIGINS = [url for url in CSRF_TRUSTED_ORIGINS if url]
+CSRF_TRUSTED_ORIGINS += ['https://*.vercel.app', 'https://*.now.sh']
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
