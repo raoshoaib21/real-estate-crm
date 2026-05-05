@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ property.title }} - PropCRM{% endblock %}
+
+{% block page_title %}{{ property.title }}{% endblock %}
+
+{% block page_actions %}
+<div class="flex gap-3">
+    <a href="{% url 'property_edit' property.pk %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+        <i class="fas fa-edit mr-1"></i> Edit
+    </a>
+    <a href="{% url 'deal_create' %}?property={{ property.pk }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+        <i class="fas fa-handshake mr-1"></i> Create Deal
+    </a>
+    <a href="{% url 'visit_create' %}?property={{ property.pk }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+        <i class="fas fa-calendar mr-1"></i> Schedule Visit
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            {% if property.primary_image %}
+            <img src="{{ property.primary_image.image.url }}" alt="{{ property.title }}" class="w-full h-64 object-cover">
+            {% else %}
+            <div class="w-full h-64 bg-gray-100 flex items-center justify-center">
+                <i class="fas fa-home text-gray-300 text-6xl"></i>
+            </div>
+            {% endif %}
+
+            {% if images|length > 1 %}
+            <div class="p-4 grid grid-cols-4 gap-2">
+                {% for img in images %}
+                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-20 object-cover rounded-lg {% if img.is_primary %}ring-2 ring-blue-500{% endif %}">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Property Details</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-bed text-blue-500 text-xl mb-1"></i>
+                    <p class="text-sm text-gray-500">Bedrooms</p>
+                    <p class="font-semibold">{{ property.bedrooms }}</p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-bath text-blue-500 text-xl mb-1"></i>
+                    <p class="text-sm text-gray-500">Bathrooms</p>
+                    <p class="font-semibold">{{ property.bathrooms }}</p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-ruler-combined text-blue-500 text-xl mb-1"></i>
+                    <p class="text-sm text-gray-500">Area</p>
+                    <p class="font-semibold">{{ property.area_sqft }} sqft</p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-car text-blue-500 text-xl mb-1"></i>
+                    <p class="text-sm text-gray-500">Parking</p>
+                    <p class="font-semibold">{{ property.parking_spaces }}</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500">Listing ID</span>
+                    <span class="font-medium">{{ property.listing_id }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500">Type</span>
+                    <span class="font-medium">{{ property.get_property_type_display }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500">Status</span>
+                    <span class="px-2 py-1 rounded-full text-xs {% if property.status == 'available' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">{{ property.get_status_display }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500">Price</span>
+                    <span class="font-bold text-blue-600">${{ property.price|floatformat:0 }}{% if property.negotiable %} <span class="text-xs text-gray-500">(Negotiable)</span>{% endif %}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500">Address</span>
+                    <span class="font-medium">{{ property.address }}, {{ property.city }}, {{ property.state }} {{ property.zip_code }}</span>
+                </div>
+                {% if property.year_built %}
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-500">Year Built</span>
+                    <span class="font-medium">{{ property.year_built }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-500">Listed By</span>
+                    <span class="font-medium">{{ property.listed_by.get_full_name|default:'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if property.description %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Description</h3>
+            <p class="text-gray-600 whitespace-pre-line">{{ property.description }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+            <div class="space-y-2">
+                <a href="{% url 'property_edit' property.pk %}" class="block w-full text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-edit mr-1"></i> Edit Property
+                </a>
+                <a href="{% url 'deal_create' %}?property={{ property.pk }}" class="block w-full text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-handshake mr-1"></i> Create Deal
+                </a>
+                <a href="{% url 'visit_create' %}?property={{ property.pk }}" class="block w-full text-center bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition">
+                    <i class="fas fa-calendar mr-1"></i> Schedule Visit
+                </a>
+            </div>
+        </div>
+
+        {% if deals %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Active Deals</h3>
+            <div class="space-y-3">
+                {% for deal in deals %}
+                <a href="{% url 'deal_detail' deal.pk %}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <p class="font-medium text-sm">{{ deal.lead.full_name }}</p>
+                    <p class="text-xs text-gray-500">{{ deal.deal_id }} - {{ deal.get_stage_display }}</p>
+                    <p class="text-sm font-semibold text-blue-600">${{ deal.deal_value|floatformat:0 }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

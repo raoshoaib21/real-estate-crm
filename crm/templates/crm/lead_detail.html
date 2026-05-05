@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lead.full_name }} - PropCRM{% endblock %}
+
+{% block page_title %}{{ lead.full_name }}{% endblock %}
+
+{% block page_actions %}
+<div class="flex gap-3">
+    <a href="{% url 'lead_edit' lead.pk %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+        <i class="fas fa-edit mr-1"></i> Edit
+    </a>
+    <a href="{% url 'deal_create' %}?lead={{ lead.pk }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+        <i class="fas fa-handshake mr-1"></i> Create Deal
+    </a>
+    <a href="{% url 'visit_create' %}?lead={{ lead.pk }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+        <i class="fas fa-calendar mr-1"></i> Schedule Visit
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Lead Info -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-500">{{ lead.lead_id }}</p>
+                    <div class="flex gap-2 mt-2">
+                        <span class="px-2 py-1 text-xs rounded-full {% if lead.lead_type == 'buyer' %}bg-blue-100 text-blue-700{% elif lead.lead_type == 'seller' %}bg-green-100 text-green-700{% else %}bg-purple-100 text-purple-700{% endif %}">
+                            {{ lead.get_lead_type_display }}
+                        </span>
+                        <span class="px-2 py-1 text-xs rounded-full {% if lead.priority == 'hot' %}bg-red-100 text-red-700{% elif lead.priority == 'high' %}bg-orange-100 text-orange-700{% elif lead.priority == 'medium' %}bg-yellow-100 text-yellow-700{% else %}bg-green-100 text-green-700{% endif %}">
+                            {{ lead.get_priority_display }}
+                        </span>
+                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Score: {{ lead.lead_score }}</span>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'lead_status_update' lead.pk %}">
+                    {% csrf_token %}
+                    <select name="status" onchange="this.form.submit()" class="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+                        {% for code, name in lead.STATUS_CHOICES %}
+                        <option value="{{ code }}" {% if lead.status == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-envelope text-gray-400 w-4"></i>
+                    <span>{{ lead.email|default:'N/A' }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-phone text-gray-400 w-4"></i>
+                    <span>{{ lead.phone }}</span>
+                </div>
+                {% if lead.budget_max %}
+                <div class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-dollar-sign text-gray-400 w-4"></i>
+                    <span>${{ lead.budget_min|floatformat:0 }} - ${{ lead.budget_max|floatformat:0 }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-user text-gray-400 w-4"></i>
+                    <span>{{ lead.assigned_to.get_full_name|default:'Unassigned' }}</span>
+                </div>
+                {% if lead.preferred_location %}
+                <div class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-map-marker-alt text-gray-400 w-4"></i>
+                    <span>{{ lead.preferred_location }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center gap-2 text-gray-600">
+                    <i class="fas fa-calendar text-gray-400 w-4"></i>
+                    <span>Created: {{ lead.created_at|date:"M d, Y" }}</span>
+                </div>
+            </div>
+
+            {% if lead.requirements %}
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Requirements</h4>
+                <p class="text-gray-600">{{ lead.requirements }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Interactions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Activity Timeline</h3>
+
+            <form method="post" class="mb-6 pb-6 border-b border-gray-100">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {{ int_form.interaction_type }}
+                    {{ int_form.subject }}
+                    <input type="hidden" name="interaction_submit" value="1">
+                </div>
+                <div class="mt-3">
+                    {{ int_form.description }}
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">Log Interaction</button>
+                </div>
+            </form>
+
+            <div class="space-y-4">
+                {% for interaction in interactions %}
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-{% if interaction.interaction_type == 'call' %}phone{% elif interaction.interaction_type == 'email' %}envelope{% elif interaction.interaction_type == 'meeting' %}users{% elif interaction.interaction_type == 'visit' %}calendar{% else %}sticky-note{% endif %} text-blue-600 text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-sm">{{ interaction.subject }}</span>
+                            <span class="text-xs text-gray-500">{{ interaction.created_at|timesince }} ago</span>
+                        </div>
+                        <p class="text-sm text-gray-500">{{ interaction.description }}</p>
+                        <p class="text-xs text-gray-400 mt-1">by {{ interaction.created_by.get_full_name|default:'System' }} | {{ interaction.get_interaction_type_display }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-4">No interactions logged yet</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Visits -->
+        {% if visits %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Site Visits</h3>
+            <div class="space-y-3">
+                {% for visit in visits %}
+                <a href="{% url 'visit_detail' visit.pk %}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div>
+                        <p class="font-medium text-sm">{{ visit.property.title }}</p>
+                        <p class="text-xs text-gray-500">{{ visit.scheduled_date }} at {{ visit.scheduled_time }} with {{ visit.agent.get_full_name|default:'N/A' }}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full {% if visit.status == 'completed' %}bg-green-100 text-green-700{% elif visit.status == 'scheduled' %}bg-blue-100 text-blue-700{% elif visit.status == 'cancelled' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ visit.get_status_display }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+            <div class="space-y-2">
+                <a href="{% url 'deal_create' %}?lead={{ lead.pk }}" class="block w-full text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-handshake mr-1"></i> Create Deal
+                </a>
+                <a href="{% url 'visit_create' %}?lead={{ lead.pk }}" class="block w-full text-center bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition">
+                    <i class="fas fa-calendar mr-1"></i> Schedule Visit
+                </a>
+            </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Tasks</h3>
+
+            <form method="post" class="mb-4 pb-4 border-b border-gray-100">
+                {% csrf_token %}
+                <input type="hidden" name="task_submit" value="1">
+                {{ task_form.title }}
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                    {{ task_form.due_date }}
+                    {{ task_form.priority }}
+                </div>
+                <div class="mt-2">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition text-sm">Add Task</button>
+                </div>
+            </form>
+
+            <div class="space-y-2">
+                {% for task in tasks %}
+                <div class="p-3 bg-gray-50 rounded-lg">
+                    <p class="font-medium text-sm {% if task.status == 'completed' %}line-through text-gray-400{% endif %}">{{ task.title }}</p>
+                    <p class="text-xs text-gray-500">Due: {{ task.due_date }} | {{ task.get_priority_display }}</p>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-sm text-center">No tasks</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Deals -->
+        {% if deals %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Deals</h3>
+            <div class="space-y-3">
+                {% for deal in deals %}
+                <a href="{% url 'deal_detail' deal.pk %}" class="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <p class="font-medium text-sm">{{ deal.deal_id }}</p>
+                    <p class="text-xs text-gray-500">{{ deal.deal_property.title }}</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">{{ deal.stage.name }}</span>
+                        <span class="font-semibold text-blue-600">${{ deal.deal_value|floatformat:0 }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - PropCRM{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-2xl">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Deal</label>
+                {{ form.deal }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Agent</label>
+                {{ form.agent }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%)</label>
+                {{ form.commission_rate }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                {{ form.status }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Split With (Co-broke)</label>
+                {{ form.split_with }}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Agent's Share (%)</label>
+                {{ form.split_percentage }}
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            {{ form.notes }}
+        </div>
+
+        <div class="flex gap-3 pt-4">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">Save Commission</button>
+            <a href="{% url 'commission_list' %}" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

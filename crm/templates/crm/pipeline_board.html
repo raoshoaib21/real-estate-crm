@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Pipeline - PropCRM{% endblock %}
+
+{% block page_title %}Deal Pipeline{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'deal_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+    <i class="fas fa-plus"></i> Create Deal
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="flex gap-4 overflow-x-auto pb-4" id="pipeline-board">
+    {% for stage_data in stage_data %}
+    <div class="flex-shrink-0 w-72 bg-gray-100 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">{{ stage_data.stage.name }}</h3>
+            <span class="px-2 py-1 text-xs rounded-full bg-white">{{ stage_data.count }}</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-3">${{ stage_data.total_value|floatformat:0 }}</p>
+
+        <div class="space-y-3 kanban-column" data-stage-id="{{ stage_data.stage.pk }}" id="column-{{ stage_data.stage.pk }}">
+            {% for deal in stage_data.deals %}
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 cursor-move deal-card" data-deal-id="{{ deal.pk }}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-gray-500">{{ deal.deal_id }}</span>
+                    <span class="text-xs px-2 py-1 rounded-full" style="background-color: {{ deal.stage.color }}20; color: {{ deal.stage.color }}">{{ deal.stage.name }}</span>
+                </div>
+                <a href="{% url 'lead_detail' deal.lead.pk %}" class="font-medium text-gray-800 hover:text-blue-600 block mb-1">{{ deal.lead.full_name }}</a>
+                <p class="text-xs text-gray-500 mb-2 truncate">{{ deal.deal_property.title }}</p>
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-600">${{ deal.deal_value|floatformat:0 }}</span>
+                    <span class="text-xs text-gray-400">{{ deal.probability }}%</span>
+                </div>
+                <div class="w-full h-1 bg-gray-200 rounded-full mt-2">
+                    <div class="h-full rounded-full bg-blue-500" style="width: {{ deal.probability }}%"></div>
+                </div>
+                {% if deal.agent %}
+                <p class="text-xs text-gray-400 mt-2"><i class="fas fa-user mr-1"></i>{{ deal.agent.get_full_name }}</p>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-8 text-gray-400 text-sm">No deals</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.kanban-column').forEach(function(column) {
+        new Sortable(column, {
+            group: 'pipeline',
+            animation: 150,
+            ghostClass: 'opacity-50',
+            onEnd: function(evt) {
+                var dealId = evt.item.getAttribute('data-deal-id');
+                var newStageId = evt.to.getAttribute('data-stage-id');
+
+                if (evt.from !== evt.to) {
+                    fetch('{% url "deal_stage_update" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: 'deal_id=' + dealId + '&stage_id=' + newStageId
+                    }).then(function(response) {
+                        return response.json();
+                    }).then(function(data) {
+                        if (data.status === 'ok') {
+                            location.reload();
+                        }
+                    });
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

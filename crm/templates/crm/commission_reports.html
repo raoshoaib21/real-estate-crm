@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Commission Reports - PropCRM{% endblock %}
+
+{% block page_title %}Commission Reports{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <p class="text-sm text-gray-500">Total Earned</p>
+        <p class="text-3xl font-bold text-green-600">${{ total_earned|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <p class="text-sm text-gray-500">Pending</p>
+        <p class="text-3xl font-bold text-orange-600">${{ total_pending|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <p class="text-sm text-gray-500">Total Deals</p>
+        <p class="text-3xl font-bold text-blue-600">{{ total_deals }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Monthly Revenue</h3>
+        <canvas id="monthlyChart" height="250"></canvas>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Agent Leaderboard</h3>
+        <div class="space-y-4">
+            {% for perf in agent_performance %}
+            <div class="flex items-center justify-between p-3 {% if forloop.first %}bg-amber-50 border border-amber-200 rounded-lg{% endif %}">
+                <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 {% if forloop.first %}bg-amber-400{% elif forloop.second %}bg-gray-400{% elif forloop.counter == 3 %}bg-orange-400{% else %}bg-gray-200{% endif %} rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {{ forloop.counter }}
+                    </span>
+                    <div>
+                        <p class="font-medium">{{ perf.agent.get_full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ perf.deals_closed }} deals closed</p>
+                    </div>
+                </div>
+                <span class="font-bold text-green-600">${{ perf.earned|floatformat:0 }}</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">No data available</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ctx = document.getElementById('monthlyChart');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Commission Earned ($)',
+                data: [{% for m in monthly_data %}{{ m.total }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                borderColor: 'rgba(34, 197, 94, 1)',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+</script>
+{% endblock %}

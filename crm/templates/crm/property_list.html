@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Properties - PropCRM{% endblock %}
+
+{% block page_title %}Properties{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'property_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+    <i class="fas fa-plus"></i> Add Property
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+    <form method="get" class="p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <input type="text" name="q" value="{{ search }}" placeholder="Search properties..." class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+            <select name="type" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Types</option>
+                <option value="apartment">Apartment</option>
+                <option value="house">House</option>
+                <option value="villa">Villa</option>
+                <option value="commercial">Commercial</option>
+                <option value="land">Land</option>
+                <option value="plot">Plot</option>
+            </select>
+
+            <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">All Status</option>
+                <option value="available">Available</option>
+                <option value="under_offer">Under Offer</option>
+                <option value="sold">Sold</option>
+                <option value="rented">Rented</option>
+            </select>
+
+            <input type="text" name="city" placeholder="City" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-search"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for property in properties %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+        <div class="relative h-48 bg-gray-200">
+            {% if property.primary_image %}
+            <img src="{{ property.primary_image.image.url }}" alt="{{ property.title }}" class="w-full h-full object-cover">
+            {% else %}
+            <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                <i class="fas fa-home text-gray-400 text-4xl"></i>
+            </div>
+            {% endif %}
+            {% if property.featured %}
+            <span class="absolute top-2 left-2 bg-amber-500 text-white text-xs px-2 py-1 rounded">Featured</span>
+            {% endif %}
+            <span class="absolute top-2 right-2 px-2 py-1 text-xs rounded-full {% if property.status == 'available' %}bg-green-100 text-green-700{% elif property.status == 'sold' %}bg-red-100 text-red-700{% elif property.status == 'under_offer' %}bg-yellow-100 text-yellow-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                {{ property.get_status_display }}
+            </span>
+        </div>
+
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">{{ property.listing_id }}</span>
+                <span class="text-xs text-gray-500">{{ property.get_property_type_display }}</span>
+            </div>
+            <h3 class="font-semibold text-gray-800 mb-1 truncate">{{ property.title }}</h3>
+            <p class="text-sm text-gray-500 mb-3"><i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>{{ property.city }}</p>
+
+            <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                <span><i class="fas fa-bed mr-1"></i>{{ property.bedrooms }}</span>
+                <span><i class="fas fa-bath mr-1"></i>{{ property.bathrooms }}</span>
+                <span><i class="fas fa-ruler-combined mr-1"></i>{{ property.area_sqft }} sqft</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                <span class="text-xl font-bold text-blue-600">${{ property.price|floatformat:0 }}</span>
+                <a href="{% url 'property_detail' property.pk %}" class="text-blue-600 text-sm hover:underline">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-12">
+        <i class="fas fa-home text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500">No properties found</p>
+        <a href="{% url 'property_create' %}" class="text-blue-600 hover:underline mt-2 inline-block">Add your first property</a>
+    </div>
+    {% endfor %}
+</div>
+
+{% if properties.has_other_pages %}
+<div class="flex justify-center mt-6">
+    <nav class="flex gap-2">
+        {% if properties.has_previous %}
+        <a href="?page={{ properties.previous_page_number }}" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Previous</a>
+        {% endif %}
+        <span class="px-3 py-2 bg-blue-600 text-white rounded-lg">Page {{ properties.number }}</span>
+        {% if properties.has_next %}
+        <a href="?page={{ properties.next_page_number }}" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Next</a>
+        {% endif %}
+    </nav>
+</div>
+{% endif %}
+{% endblock %}

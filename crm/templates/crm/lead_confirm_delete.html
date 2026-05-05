@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Lead - PropCRM{% endblock %}
+
+{% block page_title %}Delete Lead{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-md">
+    <div class="text-center">
+        <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">Delete Lead?</h3>
+        <p class="text-gray-500 mb-6">Are you sure you want to delete <strong>{{ lead.full_name }}</strong>? This action cannot be undone.</p>
+
+        <form method="post" class="flex gap-3 justify-center">
+            {% csrf_token %}
+            <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">Delete</button>
+            <a href="{% url 'lead_detail' lead.pk %}" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

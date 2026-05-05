@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Commissions - PropCRM{% endblock %}
+
+{% block page_title %}Commissions{% endblock %}
+
+{% block page_actions %}
+<div class="flex gap-3">
+    <a href="{% url 'commission_reports' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+        <i class="fas fa-chart-bar mr-1"></i> Reports
+    </a>
+    <a href="{% url 'commission_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+        <i class="fas fa-plus"></i> Add Commission
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <p class="text-sm text-gray-500">Total Pending</p>
+        <p class="text-3xl font-bold text-orange-600">${{ total_pending|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <p class="text-sm text-gray-500">Total Paid</p>
+        <p class="text-3xl font-bold text-green-600">${{ total_paid|floatformat:0 }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <p class="text-sm text-gray-500">Total Records</p>
+        <p class="text-3xl font-bold text-blue-600">{{ commissions.count }}</p>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Deal</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Agent</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Deal Value</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Rate</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Commission</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Net Amount</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for commission in commissions %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <a href="{% url 'deal_detail' commission.deal.pk %}" class="font-medium text-blue-600 hover:underline">{{ commission.deal.deal_id }}</a>
+                        <p class="text-xs text-gray-500">{{ commission.deal.lead.full_name }}</p>
+                    </td>
+                    <td class="px-4 py-3">{{ commission.agent.get_full_name }}</td>
+                    <td class="px-4 py-3">${{ commission.deal_value|floatformat:0 }}</td>
+                    <td class="px-4 py-3">{{ commission.commission_rate }}%</td>
+                    <td class="px-4 py-3 font-medium">${{ commission.commission_amount|floatformat:0 }}</td>
+                    <td class="px-4 py-3 font-semibold text-green-600">${{ commission.net_amount|floatformat:0 }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs rounded-full {% if commission.status == 'pending' %}bg-orange-100 text-orange-700{% elif commission.status == 'approved' %}bg-blue-100 text-blue-700{% elif commission.status == 'paid' %}bg-green-100 text-green-700{% endif %}">
+                            {{ commission.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No commission records</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

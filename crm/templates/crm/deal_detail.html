@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ deal.deal_id }} - PropCRM{% endblock %}
+
+{% block page_title %}{{ deal.deal_id }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-4">
+                    <span class="px-3 py-1 text-sm rounded-full" style="background-color: {{ deal.stage.color }}20; color: {{ deal.stage.color }}">
+                        {{ deal.stage.name }} ({{ deal.probability }}%)
+                    </span>
+                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">{{ deal.get_deal_type_display }}</span>
+                </div>
+                <a href="{% url 'deal_edit' deal.pk %}" class="text-blue-600 hover:underline text-sm">Edit Deal</a>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-sm text-gray-500">Deal Value</p>
+                    <p class="text-2xl font-bold text-blue-600">${{ deal.deal_value|floatformat:0 }}</p>
+                </div>
+                {% if deal.offer_amount %}
+                <div>
+                    <p class="text-sm text-gray-500">Offer Amount</p>
+                    <p class="text-lg font-semibold">${{ deal.offer_amount|floatformat:0 }}</p>
+                </div>
+                {% endif %}
+                {% if deal.counter_offer %}
+                <div>
+                    <p class="text-sm text-gray-500">Counter Offer</p>
+                    <p class="text-lg font-semibold">${{ deal.counter_offer|floatformat:0 }}</p>
+                </div>
+                {% endif %}
+                {% if deal.expected_close_date %}
+                <div>
+                    <p class="text-sm text-gray-500">Expected Close</p>
+                    <p class="text-lg font-semibold">{{ deal.expected_close_date }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-sm text-gray-500">Weighted Value</p>
+                    <p class="text-lg font-semibold">${{ deal.weighted_value|floatformat:0 }}</p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Lead</p>
+                    <a href="{% url 'lead_detail' deal.lead.pk %}" class="font-medium text-blue-600 hover:underline">{{ deal.lead.full_name }}</a>
+                    <p class="text-xs text-gray-400">{{ deal.lead.phone }} | {{ deal.lead.email }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Property</p>
+                    <a href="{% url 'property_detail' deal.deal_property.pk %}" class="font-medium text-blue-600 hover:underline">{{ deal.deal_property.title }}</a>
+                    <p class="text-xs text-gray-400">{{ deal.deal_property.address }}, {{ deal.deal_property.city }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Agent</p>
+                    <p class="font-medium">{{ deal.agent.get_full_name|default:'N/A' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Created</p>
+                    <p class="font-medium">{{ deal.created_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Activity Log</h3>
+
+            <form method="post" class="mb-6 pb-6 border-b border-gray-100">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{ activity_form.activity_type }}
+                </div>
+                <div class="mt-3">
+                    {{ activity_form.description }}
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">Log Activity</button>
+                </div>
+            </form>
+
+            <div class="space-y-4">
+                {% for activity in activities %}
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-{% if activity.activity_type == 'call' %}phone{% elif activity.activity_type == 'email' %}envelope{% elif activity.activity_type == 'meeting' %}users{% elif activity.activity_type == 'visit' %}calendar{% elif activity.activity_type == 'offer' %}tag{% elif activity.activity_type == 'counter_offer' %}exchange-alt{% else %}sticky-note{% endif %} text-gray-600 text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm">{{ activity.description }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ activity.created_by.get_full_name|default:'System' }} - {{ activity.created_at|timesince }} ago</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-4">No activities logged</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+            <div class="space-y-2">
+                <a href="{% url 'lead_detail' deal.lead.pk %}" class="block w-full text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-user mr-1"></i> View Lead
+                </a>
+                <a href="{% url 'property_detail' deal.deal_property.pk %}" class="block w-full text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-home mr-1"></i> View Property
+                </a>
+            </div>
+        </div>
+
+        {% if deal.notes %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Notes</h3>
+            <p class="text-gray-600 whitespace-pre-line">{{ deal.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
