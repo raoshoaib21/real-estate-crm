@@ -9,72 +9,86 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.1/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        #sidebar-overlay { transition: opacity 0.3s; }
+        #sidebar { transition: transform 0.3s ease-in-out; }
+        .sidebar-open #sidebar { transform: translateX(0); }
+        .sidebar-open #sidebar-overlay { opacity: 1; pointer-events: auto; }
+        .sidebar-closed #sidebar { transform: translateX(-100%); }
+        .sidebar-closed #sidebar-overlay { opacity: 0; pointer-events: none; }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50">
     {% if user.is_authenticated %}
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden sidebar-closed" id="app-wrapper">
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden opacity-0 pointer-events-none" onclick="toggleSidebar()"></div>
+
         <!-- Sidebar -->
-        <aside class="w-64 bg-slate-900 text-white flex flex-col">
-            <div class="p-6 border-b border-slate-700">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto overflow-y-auto">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between">
                 <a href="{% url 'dashboard' %}" class="flex items-center gap-3">
                     <i class="fas fa-building text-blue-400 text-2xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold">PropCRM</h1>
+                        <h1 class="text-lg font-bold">PropCRM</h1>
                         <p class="text-xs text-slate-400">Real Estate CRM</p>
                     </div>
                 </a>
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white p-1">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
 
-            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-chart-line w-5"></i> Dashboard
+            <nav class="flex-1 p-3 space-y-1">
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-chart-line w-5 text-center"></i> <span class="hidden sm:inline">Dashboard</span><span class="sm:hidden">Home</span>
                 </a>
 
-                <div class="pt-4 pb-2">
+                <div class="pt-3 pb-1">
                     <p class="px-3 text-xs font-semibold text-slate-500 uppercase">Management</p>
                 </div>
 
-                <a href="{% url 'property_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if 'property' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-home w-5"></i> Properties
+                <a href="{% url 'property_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if 'property' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-home w-5 text-center"></i> <span class="hidden sm:inline">Properties</span><span class="sm:hidden">Listings</span>
                 </a>
 
-                <a href="{% url 'lead_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if 'lead' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-users w-5"></i> Leads
+                <a href="{% url 'lead_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if 'lead' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-users w-5 text-center"></i> <span class="hidden sm:inline">Leads</span><span class="sm:hidden">Contacts</span>
                 </a>
 
-                <a href="{% url 'deal_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if 'deal' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-handshake w-5"></i> Deals
+                <a href="{% url 'deal_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if 'deal' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-handshake w-5 text-center"></i> <span class="hidden sm:inline">Deals</span><span class="sm:hidden">Pipeline</span>
                 </a>
 
-                <a href="{% url 'pipeline_board' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'pipeline_board' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-columns w-5"></i> Pipeline
+                <a href="{% url 'pipeline_board' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.resolver_match.url_name == 'pipeline_board' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-columns w-5 text-center"></i> <span class="hidden sm:inline">Pipeline Board</span><span class="sm:hidden">Board</span>
                 </a>
 
-                <a href="{% url 'visit_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if 'visit' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-calendar-check w-5"></i> Site Visits
+                <a href="{% url 'visit_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if 'visit' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-calendar-check w-5 text-center"></i> <span class="hidden sm:inline">Site Visits</span><span class="sm:hidden">Visits</span>
                 </a>
 
-                <div class="pt-4 pb-2">
+                <div class="pt-3 pb-1">
                     <p class="px-3 text-xs font-semibold text-slate-500 uppercase">Finance</p>
                 </div>
 
-                <a href="{% url 'commission_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if 'commission' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-dollar-sign w-5"></i> Commissions
+                <a href="{% url 'commission_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if 'commission' in request.resolver_match.url_name %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-dollar-sign w-5 text-center"></i> <span class="hidden sm:inline">Commissions</span><span class="sm:hidden">Earnings</span>
                 </a>
 
-                <a href="{% url 'commission_reports' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'commission_reports' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-chart-bar w-5"></i> Reports
+                <a href="{% url 'commission_reports' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.resolver_match.url_name == 'commission_reports' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-chart-bar w-5 text-center"></i> <span class="hidden sm:inline">Reports</span><span class="sm:hidden">Stats</span>
                 </a>
 
-                <a href="{% url 'reports' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg {% if request.resolver_match.url_name == 'reports' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition">
-                    <i class="fas fa-chart-pie w-5"></i> Analytics
+                <a href="{% url 'reports' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {% if request.resolver_match.url_name == 'reports' %}bg-blue-600{% else %}hover:bg-slate-800{% endif %} transition text-sm">
+                    <i class="fas fa-chart-pie w-5 text-center"></i> <span class="hidden sm:inline">Analytics</span><span class="sm:hidden">Insights</span>
                 </a>
             </nav>
 
-            <div class="p-4 border-t border-slate-700">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div class="p-3 border-t border-slate-700">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <span class="text-sm font-bold">{{ user.first_name|first|upper }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -85,26 +99,32 @@
                 <form action="{% url 'logout' %}" method="post" class="w-full">
                     {% csrf_token %}
                     <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                        <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Logout</span>
                     </button>
                 </form>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
-            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <main class="flex-1 overflow-y-auto w-full">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-gray-800">{% block page_title %}{% endblock %}</h2>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-gray-900 p-1">
+                            <i class="fas fa-bars text-lg"></i>
+                        </button>
+                        <h2 class="text-lg font-semibold text-gray-800">{% block page_title %}{% endblock %}</h2>
+                    </div>
                     {% block page_actions %}{% endblock %}
                 </div>
             </header>
 
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
                 {% if messages %}
                 <div class="mb-4 space-y-2">
                     {% for message in messages %}
-                    <div class="bg-{{ message.tags|default:'info' }}-100 border border-{{ message.tags|default:'info' }}-400 text-{{ message.tags|default:'info' }}-700 px-4 py-3 rounded relative" role="alert">
+                    <div class="bg-{{ message.tags|default:'info' }}-100 border border-{{ message.tags|default:'info' }}-400 text-{{ message.tags|default:'info' }}-700 px-4 py-3 rounded relative text-sm" role="alert">
                         <span>{{ message }}</span>
                     </div>
                     {% endfor %}
@@ -119,6 +139,18 @@
     {% block auth_content %}{% endblock %}
     {% endif %}
 
+    <script>
+        function toggleSidebar() {
+            const wrapper = document.getElementById('app-wrapper');
+            if (wrapper.classList.contains('sidebar-closed')) {
+                wrapper.classList.remove('sidebar-closed');
+                wrapper.classList.add('sidebar-open');
+            } else {
+                wrapper.classList.remove('sidebar-open');
+                wrapper.classList.add('sidebar-closed');
+            }
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

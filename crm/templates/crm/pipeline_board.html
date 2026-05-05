@@ -5,32 +5,34 @@
 {% block page_title %}Deal Pipeline{% endblock %}
 
 {% block page_actions %}
-<a href="{% url 'deal_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-    <i class="fas fa-plus"></i> Create Deal
-</a>
+<div class="flex gap-2">
+    <a href="{% url 'deal_create' %}" class="bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+        <i class="fas fa-plus"></i> <span class="hidden sm:inline">Create Deal</span><span class="sm:hidden">Deal</span>
+    </a>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="flex gap-4 overflow-x-auto pb-4" id="pipeline-board">
+<div class="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0" id="pipeline-board">
     {% for stage_data in stage_data %}
-    <div class="flex-shrink-0 w-72 bg-gray-100 rounded-xl p-4">
-        <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-gray-800">{{ stage_data.stage.name }}</h3>
+    <div class="flex-shrink-0 w-64 sm:w-72 bg-gray-100 rounded-xl p-3 sm:p-4">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-800 text-sm sm:text-base">{{ stage_data.stage.name }}</h3>
             <span class="px-2 py-1 text-xs rounded-full bg-white">{{ stage_data.count }}</span>
         </div>
-        <p class="text-sm text-gray-500 mb-3">${{ stage_data.total_value|floatformat:0 }}</p>
+        <p class="text-xs sm:text-sm text-gray-500 mb-3">${{ stage_data.total_value|floatformat:0 }}</p>
 
         <div class="space-y-3 kanban-column" data-stage-id="{{ stage_data.stage.pk }}" id="column-{{ stage_data.stage.pk }}">
             {% for deal in stage_data.deals %}
-            <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 cursor-move deal-card" data-deal-id="{{ deal.pk }}">
+            <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200 cursor-move deal-card" data-deal-id="{{ deal.pk }}">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs text-gray-500">{{ deal.deal_id }}</span>
                     <span class="text-xs px-2 py-1 rounded-full" style="background-color: {{ deal.stage.color }}20; color: {{ deal.stage.color }}">{{ deal.stage.name }}</span>
                 </div>
-                <a href="{% url 'lead_detail' deal.lead.pk %}" class="font-medium text-gray-800 hover:text-blue-600 block mb-1">{{ deal.lead.full_name }}</a>
+                <a href="{% url 'lead_detail' deal.lead.pk %}" class="font-medium text-gray-800 hover:text-blue-600 block mb-1 text-sm">{{ deal.lead.full_name }}</a>
                 <p class="text-xs text-gray-500 mb-2 truncate">{{ deal.deal_property.title }}</p>
                 <div class="flex items-center justify-between">
-                    <span class="font-bold text-blue-600">${{ deal.deal_value|floatformat:0 }}</span>
+                    <span class="font-bold text-blue-600 text-sm">${{ deal.deal_value|floatformat:0 }}</span>
                     <span class="text-xs text-gray-400">{{ deal.probability }}%</span>
                 </div>
                 <div class="w-full h-1 bg-gray-200 rounded-full mt-2">
@@ -41,7 +43,7 @@
                 {% endif %}
             </div>
             {% empty %}
-            <div class="text-center py-8 text-gray-400 text-sm">No deals</div>
+            <div class="text-center py-6 text-gray-400 text-xs sm:text-sm">No deals</div>
             {% endfor %}
         </div>
     </div>
@@ -60,21 +62,13 @@ document.addEventListener('DOMContentLoaded', function() {
             onEnd: function(evt) {
                 var dealId = evt.item.getAttribute('data-deal-id');
                 var newStageId = evt.to.getAttribute('data-stage-id');
-
                 if (evt.from !== evt.to) {
                     fetch('{% url "deal_stage_update" %}', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}' },
                         body: 'deal_id=' + dealId + '&stage_id=' + newStageId
-                    }).then(function(response) {
-                        return response.json();
-                    }).then(function(data) {
-                        if (data.status === 'ok') {
-                            location.reload();
-                        }
+                    }).then(function(r) { return r.json(); }).then(function(data) {
+                        if (data.status === 'ok') { location.reload(); }
                     });
                 }
             }
